@@ -19,6 +19,7 @@ class ColorPicker @JvmOverloads constructor(
         defStyleAttr: Int = 0
 ) : View(ctx, attrs, defStyleAttr) {
 
+    var isChangingColor = false
     val colors: IntArray
     val strokeColor: Int
     var length: Float
@@ -74,10 +75,6 @@ class ColorPicker @JvmOverloads constructor(
         rainbowBackgroundPaint.strokeWidth = rainbowPaint.strokeWidth + strokeSize
         canvas.drawLine(lineX, lineY, lengthX + lineX, lengthY + lineY, rainbowBackgroundPaint)
         canvas.drawLine(lineX, lineY, lengthX + lineX, lengthY + lineY, rainbowPaint)
-        val paint = Paint()
-        paint.color = Color.BLACK
-        canvas.drawLine(lineX, lineY, lengthX + lineX, lengthY + lineY, paint)//draw x axis
-        canvas.drawLine(0F, 20F, rainbowBaseline, 20F, paint)
     }
 
     private fun drawColorAim(canvas: Canvas, baseLine: Float, offset: Float, size: Float, color: Int) {
@@ -96,8 +93,8 @@ class ColorPicker @JvmOverloads constructor(
         layoutParams.height = if (!isVertical) Math.ceil(viewHeight.toDouble()).toInt() else Math.ceil(viewLength.toDouble()).toInt()
         layoutParams.width = if (!isVertical) Math.ceil(viewLength.toDouble()).toInt() else Math.ceil(viewHeight.toDouble()).toInt()
 
-        val x0 = if (!isVertical) (3F * radius) / 2F + strokeSize else 0F
-        val y0 = if (!isVertical) 0F else (3F * radius) / 2F + strokeSize
+        val x0 = if (!isVertical) (3F * radius) / 2F else 0F
+        val y0 = if (!isVertical) 0F else (3F * radius) / 2F
         val x1 = x0 + (if (!isVertical) length else 0f)
         val y1 = y0 + (if (!isVertical) 0f else length)
         val shader = LinearGradient(
@@ -114,16 +111,32 @@ class ColorPicker @JvmOverloads constructor(
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         val action = event.action
-        if (action == MotionEvent.ACTION_MOVE || action == MotionEvent.ACTION_DOWN) {
-            val coordinate = if (!isVertical) event.x else event.y
-            pick = coordinate / length
-            if (pick < 0) pick = 0f
-            else if (pick > 1) pick = 1f
-            listener?.onChangingColor(color)
-            showPreview = true
+
+
+        val rectLeftX = if (!isVertical) 0f else rainbowBaseline - radius
+        val rectRightX = if (!isVertical) length + radius else rainbowBaseline + radius
+        val rectTopY = if (!isVertical) rainbowBaseline - radius else 0f
+        val rectBottomY = if (!isVertical) rainbowBaseline + radius else length + radius
+        val pointX = event.x
+        val pointY = event.y
+
+        if (action == MotionEvent.ACTION_DOWN) {
+            if(pointX > rectLeftX && pointX < rectRightX && pointY < rectBottomY && pointY > rectTopY) {
+                isChangingColor = true
+            }
+        }
+        if ((action == MotionEvent.ACTION_MOVE || action == MotionEvent.ACTION_DOWN) && isChangingColor) {
+                val coordinate = if (!isVertical) event.x else event.y
+                pick = coordinate / length
+                if (pick < 0) pick = 0f
+                else if (pick > 1) pick = 1f
+                listener?.onChangingColor(color)
+                showPreview = true
+
         } else if (action == MotionEvent.ACTION_UP) {
             showPreview = false
             listener?.onColorChanged(color)
+            isChangingColor = false
         }
         postInvalidateOnAnimation()
         return true
