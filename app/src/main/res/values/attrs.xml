@@ -12,5 +12,7 @@
         <attr name="picker_pallet" format="reference"/>
         <attr name="picker_strokeSize" format="dimension"/>
         <attr name="picker_strokeColor" format="color"/>
+        <attr name="picker_isVertical" format="boolean"/>
+        <attr name="picker_length" format="dimension"/>
     </declare-styleable>
 </resources>

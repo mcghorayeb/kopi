@@ -5,26 +5,28 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
+    android:background="@color/colorPrimary"
     tools:context="com.stepango.colorpicker.MainActivity">
+
+
 
     <com.stepango.colorpicker.ColorPicker
         android:id="@+id/picker"
-        android:layout_width="match_parent"
-        android:layout_height="64dp"
-        app:picker_bgColor="#AAAAAA"
-        app:picker_pallet="@array/colors"
-        app:picker_strokeSize="2dp"/>
-
-    <com.stepango.colorpicker.RainbowTextView
-        android:layout_below="@id/picker"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="32dp"
-        android:textStyle="italic"
-        android:text="BANDLAB"/>
+        app:picker_bgColor="#AAAAAA"
+        app:picker_previewRadius="16dp"
+        app:picker_baseline="65dp"
+        app:picker_pallet="@array/colors"
+        app:picker_isVertical="true"
+        app:picker_length="200dp"
+        android:background="@color/colorAccent"
+        app:picker_strokeSize="3dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="test. This is a test"
+        android:layout_above="@+id/picker"/>
 
 </RelativeLayout>

@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <array name="colors">
+        <item>#FFFFFF</item>
+        <item>#EB949F</item>
+        <item>#FAD08B</item>
+        <item>#9DB87E</item>
+        <item>#B0BDFF</item>
+        <item>#000000</item>
+    </array>
+    <array name="colors_old">
         <item>#00ff00</item>
         <item>#00ffff</item>
         <item>#0000ff</item>

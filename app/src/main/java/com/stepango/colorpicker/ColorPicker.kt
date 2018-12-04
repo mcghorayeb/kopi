@@ -1,27 +1,27 @@
-package com.stepango.colorpicker""
+package com.stepango.colorpicker
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Canvas
+import android.graphics.*
 import android.graphics.Color.*
-import android.graphics.LinearGradient
-import android.graphics.Paint
-import android.graphics.Shader
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import com.stepango.colorpicker.R.styleable
+import android.opengl.ETC1.getWidth
+
+
 
 @SuppressWarnings("MagicNumber")
 class ColorPicker @JvmOverloads constructor(
-        ctx: Context,
+        val ctx: Context,
         attrs: AttributeSet? = null,
         defStyleAttr: Int = 0
 ) : View(ctx, attrs, defStyleAttr) {
 
     val colors: IntArray
     val strokeColor: Int
-
+    var length: Float
     val strokeSize: Float
     val radius: Float
     val pickRadius: Float
@@ -36,6 +36,7 @@ class ColorPicker @JvmOverloads constructor(
     var pick = 0.5f
     val rainbowBaseline: Float
     var showPreview = false
+    var isVertical = false
     var listener: OnColorChangedListener? = null
 
     init {
@@ -48,8 +49,10 @@ class ColorPicker @JvmOverloads constructor(
         radius = a.getDimension(styleable.ColorPicker_picker_radius, 16.dpToPx(ctx))
         pickRadius = a.getDimension(styleable.ColorPicker_picker_radius, 12.dpToPx(ctx))
         previewRadius = a.getDimension(styleable.ColorPicker_picker_previewRadius, 16.dpToPx(ctx))
-        rainbowBaseline = a.getDimension(styleable.ColorPicker_picker_baseline, 48.dpToPx(ctx))
+        rainbowBaseline = a.getDimension(styleable.ColorPicker_picker_baseline, 56.dpToPx(ctx))
         previewBaseline = a.getDimension(styleable.ColorPicker_picker_previewBaseline, 18.dpToPx(ctx))
+        isVertical = a.getBoolean(styleable.ColorPicker_picker_isVertical, false)
+        length = a.getDimension(styleable.ColorPicker_picker_length, if (isVertical) height.toFloat() else width.toFloat())
         //@formatter:on
         a.recycle()
     }
@@ -63,30 +66,45 @@ class ColorPicker @JvmOverloads constructor(
     }
 
     private fun drawPicker(canvas: Canvas) {
-        val lineX = radius.toFloat()
-        val lineY = rainbowBaseline.toFloat()
-        rainbowPaint.strokeWidth = radius.toFloat()
+        val lineX = if (!isVertical) radius else rainbowBaseline
+        val lineY = if (!isVertical) rainbowBaseline else radius
+        val lengthX = if (!isVertical) length else 0F
+        val lengthY = if (isVertical) length else 0F
+        rainbowPaint.strokeWidth = radius
         rainbowBackgroundPaint.strokeWidth = rainbowPaint.strokeWidth + strokeSize
-        canvas.drawLine(lineX, lineY, width - lineX, lineY, rainbowBackgroundPaint)
-        canvas.drawLine(lineX, lineY, width - lineX, lineY, rainbowPaint)
+        canvas.drawLine(lineX, lineY, lengthX + lineX, lengthY + lineY, rainbowBackgroundPaint)
+        canvas.drawLine(lineX, lineY, lengthX + lineX, lengthY + lineY, rainbowPaint)
+        val paint = Paint()
+        paint.color = Color.BLACK
+        canvas.drawLine(lineX, lineY, lengthX + lineX, lengthY + lineY, paint)//draw x axis
+        canvas.drawLine(0F, 20F, rainbowBaseline, 20F, paint)
     }
 
     private fun drawColorAim(canvas: Canvas, baseLine: Float, offset: Float, size: Float, color: Int) {
-        val circleCenterX = offset + pick * (canvas.width - offset * 2)
-        canvas.drawCircle(circleCenterX, baseLine, size + strokeSize, pickPaint.apply { this.color = strokeColor })
-        canvas.drawCircle(circleCenterX, baseLine, size, pickPaint.apply { this.color = color })
+        val circleCenterX = if (!isVertical) offset + pick * length else baseLine
+        val circleCenterY = if (!isVertical) baseLine else offset + pick * length
+        canvas.drawCircle(circleCenterX, circleCenterY, size + strokeSize, pickPaint.apply { this.color = strokeColor })
+        canvas.drawCircle(circleCenterX, circleCenterY, size, pickPaint.apply { this.color = color })
     }
 
     @SuppressLint("DrawAllocation")
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-        val height = measuredHeight.toFloat()
-        val width = measuredWidth.toFloat()
+
+        val viewLength = radius + length + previewRadius + 2 * strokeSize
+        val viewHeight = rainbowBaseline + radius
+        layoutParams.height = if (!isVertical) Math.ceil(viewHeight.toDouble()).toInt() else Math.ceil(viewLength.toDouble()).toInt()
+        layoutParams.width = if (!isVertical) Math.ceil(viewLength.toDouble()).toInt() else Math.ceil(viewHeight.toDouble()).toInt()
+
+        val x0 = if (!isVertical) (3F * radius) / 2F + strokeSize else 0F
+        val y0 = if (!isVertical) 0F else (3F * radius) / 2F + strokeSize
+        val x1 = x0 + (if (!isVertical) length else 0f)
+        val y1 = y0 + (if (!isVertical) 0f else length)
         val shader = LinearGradient(
-                0.0f,
-                height / 2.0f,
-                width,
-                height / 2.0f,
+                x0,
+                y0,
+                x1,
+                y1,
                 colors,
                 null,
                 Shader.TileMode.CLAMP
@@ -97,13 +115,15 @@ class ColorPicker @JvmOverloads constructor(
     override fun onTouchEvent(event: MotionEvent): Boolean {
         val action = event.action
         if (action == MotionEvent.ACTION_MOVE || action == MotionEvent.ACTION_DOWN) {
-            pick = event.x / measuredWidth.toFloat()
+            val coordinate = if (!isVertical) event.x else event.y
+            pick = coordinate / length
             if (pick < 0) pick = 0f
             else if (pick > 1) pick = 1f
-            listener?.onColorChanged(color)
+            listener?.onChangingColor(color)
             showPreview = true
         } else if (action == MotionEvent.ACTION_UP) {
             showPreview = false
+            listener?.onColorChanged(color)
         }
         postInvalidateOnAnimation()
         return true
@@ -123,6 +143,8 @@ class ColorPicker @JvmOverloads constructor(
     }
 
     interface OnColorChangedListener {
+        fun onChangingColor(color: Int)
+
         fun onColorChanged(color: Int)
     }
 
