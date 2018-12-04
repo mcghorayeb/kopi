@@ -1,4 +1,4 @@
-package com.stepango.colorpicker
+package com.stepango.colorpicker""
 
 import android.annotation.SuppressLint
 import android.content.Context
