@@ -1,8 +1,6 @@
 # kopi
 **K**otlin c**O**lor **PI**cker
 
-![alt tag](https://cdn-images-1.medium.com/max/800/1*KFJhqaxBKJBH5VEbwooOYA.gif)
+(Forked)
 
-Sample app for my post on Medium. 
-
-https://medium.com/@stepango/kotlin-color-picker-part-1-427983cbcd66#.ivfjdg5iv
+In this project, I added the vertical orientation for the view. (Just send is_vertical in the layout). Also, I fixed the view to be other than just full screen. I added a listener to onColorChangeFinished as well.
